@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -55,6 +55,27 @@ export function OrdersAdmin() {
 
   const totalItems = useMemo(() => `${orders.length * 2 + 8} items`, [orders.length]);
 
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadOrders() {
+      try {
+        const response = await fetch("/api/orders");
+        if (!response.ok) throw new Error("Failed to load orders.");
+        const data = (await response.json()) as { orders: Order[] };
+        if (!ignore) setOrders(data.orders);
+      } catch {
+        toast("Could not load orders from the API.");
+      }
+    }
+
+    loadOrders();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   function toggleSelected(id: string) {
     setSelected((current) => {
       const next = new Set(current);
@@ -64,23 +85,45 @@ export function OrdersAdmin() {
     });
   }
 
-  function updateStatus(id: string, state: DeliveryState) {
+  async function updateStatus(id: string, state: DeliveryState) {
     setOrders((current) =>
       current.map((order) => (order.id === id ? { ...order, state } : order)),
     );
-    toast("Delivery state updated.");
+    const response = await fetch(`/api/orders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+
+    if (response.ok) {
+      toast("Delivery state updated.");
+    } else {
+      toast("Could not update delivery state.");
+    }
   }
 
-  function applyBulkState() {
+  async function applyBulkState() {
+    const ids = [...selected];
     setOrders((current) =>
       current.map((order) =>
         selected.has(order.id) ? { ...order, state: bulkState } : order,
       ),
     );
     setBulkOpen(false);
-    toast("Delivery state changed for selected orders.", {
-      icon: <Check className="size-4" />,
+
+    const response = await fetch("/api/orders/bulk", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, state: bulkState }),
     });
+
+    if (response.ok) {
+      toast("Delivery state changed for selected orders.", {
+        icon: <Check className="size-4" />,
+      });
+    } else {
+      toast("Could not update selected orders.");
+    }
   }
 
   return (
