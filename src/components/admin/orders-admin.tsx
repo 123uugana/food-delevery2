@@ -31,6 +31,7 @@ import {
   type DeliveryState,
   type Order,
 } from "@/components/admin/mock-data";
+import { apiUrl } from "@/lib/api";
 import { CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const states: DeliveryState[] = ["Pending", "Delivered", "Cancelled"];
@@ -60,7 +61,7 @@ export function OrdersAdmin() {
 
     async function loadOrders() {
       try {
-        const response = await fetch("/api/orders");
+        const response = await fetch(apiUrl("/orders"));
         if (!response.ok) throw new Error("Failed to load orders.");
         const data = (await response.json()) as { orders: Order[] };
         if (!ignore) setOrders(data.orders);
@@ -89,7 +90,7 @@ export function OrdersAdmin() {
     setOrders((current) =>
       current.map((order) => (order.id === id ? { ...order, state } : order)),
     );
-    const response = await fetch(`/api/orders/${id}`, {
+    const response = await fetch(apiUrl(`/orders/${id}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ state }),
@@ -111,7 +112,7 @@ export function OrdersAdmin() {
     );
     setBulkOpen(false);
 
-    const response = await fetch("/api/orders/bulk", {
+    const response = await fetch(apiUrl("/orders/bulk"), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids, state: bulkState }),
