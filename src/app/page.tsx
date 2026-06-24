@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { FoodDeliveryHome } from "@/components/user/food-delivery-home";
 
 export default function Home() {
-  redirect("/admin/food-menu");
+  return <FoodDeliveryHome />;
 }

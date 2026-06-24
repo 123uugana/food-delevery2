@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NomNom Admin",
-  description: "NomNom Swift delivery admin dashboard",
+  title: "NomNom",
+  description: "Fresh fast delivered food ordering",
 };
 
 export default function RootLayout({
