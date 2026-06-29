@@ -19,7 +19,7 @@ export type Order = {
   id: string;
   number: number;
   customer: string;
-  foods: Pick<Dish, "id" | "name" | "image">[];
+  foods: (Pick<Dish, "id" | "name" | "image"> & { quantity?: number })[];
   date: string;
   total: string;
   address: string;

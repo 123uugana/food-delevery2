@@ -234,10 +234,12 @@ export function OrdersAdmin() {
                             <img
                               src={food.image}
                               alt={food.name}
-                              className="size-8 rounded-md object-cover"
+                              className="size-8 rounded-md object-cover object-center"
                             />
                             <span className="text-[12px] font-medium">{food.name}</span>
-                            <span className="ml-auto text-[12px] font-semibold">x 1</span>
+                            <span className="ml-auto text-[12px] font-semibold">
+                              x {food.quantity ?? 1}
+                            </span>
                           </div>
                         ))}
                       </div>

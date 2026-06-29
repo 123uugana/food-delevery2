@@ -144,7 +144,7 @@ export function DishDialog({
               <img
                 src={draft.image}
                 alt="Selected dish"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-center"
               />
               <Button
                 type="button"

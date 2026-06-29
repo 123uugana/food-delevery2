@@ -15,6 +15,11 @@ import { type DishDraft } from "./types";
 
 const preferredCategoryOrder = ["pizzas", "lunch", "appetizers", "salads"];
 
+function categoryOrderIndex(id: string) {
+  const index = preferredCategoryOrder.indexOf(id);
+  return index === -1 ? preferredCategoryOrder.length : index;
+}
+
 export function useFoodMenu() {
   const [categories, setCategories] = useState<Category[]>(seedCategories);
   const [dishes, setDishes] = useState<Dish[]>(seedDishes);
@@ -51,8 +56,7 @@ export function useFoodMenu() {
       .filter((section) => section.dishes.length > 0 || activeCategory !== "all")
       .sort(
         (a, b) =>
-          preferredCategoryOrder.indexOf(a.category.id) -
-          preferredCategoryOrder.indexOf(b.category.id),
+          categoryOrderIndex(a.category.id) - categoryOrderIndex(b.category.id),
       );
   }, [activeCategory, categoriesWithCounts, dishes]);
 
@@ -149,11 +153,6 @@ export function useFoodMenu() {
 
       const data = (await response.json()) as { dish: Dish };
       setDishes((current) => [data.dish, ...current]);
-      setCategories((current) =>
-        current.map((item) =>
-          item.id === categoryId ? { ...item, count: item.count + 1 } : item,
-        ),
-      );
       setAddForCategory(null);
       toast(`New dish is being added to the menu${category ? ` (${category.name})` : ""}`, {
         icon: <Check className="size-4" />,

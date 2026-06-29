@@ -71,7 +71,7 @@ function FoodCard({ dish, onEdit }: { dish: Dish; onEdit: () => void }) {
     <article className="overflow-hidden rounded-xl border border-[#dddddd] bg-white">
       <div className="relative h-[132px] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element -- Mock dashboard images and blob previews intentionally use plain img tags. */}
-        <img src={dish.image} alt={dish.name} className="h-full w-full object-cover" />
+        <img src={dish.image} alt={dish.name} className="h-full w-full object-cover object-center" />
         <Button
           size="icon"
           variant="secondary"
