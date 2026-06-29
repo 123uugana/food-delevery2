@@ -1,0 +1,16 @@
+{
+  "name": "nomnom-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.14",
+    "@vercel/blob": "^2.4.1",
+    "hono": "^4.12.25",
+    "mongoose": "^8.24.0"
+  }
+}
