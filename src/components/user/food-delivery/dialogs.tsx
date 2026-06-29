@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CheckCircle2, Clock3, Minus, Plus, X } from "lucide-react";
 import type { Dish } from "@/components/admin/mock-data";
 import { formatTotal } from "./utils";
@@ -133,15 +134,20 @@ export function LoginAlert({ onClose }: { onClose: () => void }) {
           Please sign in before opening your account.
         </p>
         <div className="mt-5 grid grid-cols-2 gap-2">
-          <button
+          <Link
+            href="/log-in"
             onClick={onClose}
-            className="h-8 rounded-md bg-[#18181b] text-[10px] font-bold text-white"
+            className="grid h-8 place-items-center rounded-md bg-[#18181b] text-[10px] font-bold text-white"
           >
             Log in
-          </button>
-          <button onClick={onClose} className="h-8 rounded-md border text-[10px] font-bold">
+          </Link>
+          <Link
+            href="/sign-up"
+            onClick={onClose}
+            className="grid h-8 place-items-center rounded-md border text-[10px] font-bold"
+          >
             Sign up
-          </button>
+          </Link>
         </div>
       </div>
     </div>
