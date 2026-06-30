@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { AlertCircle, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -337,6 +337,7 @@ function PasswordFields({
         onChange={(event) => onPasswordChange(event.target.value)}
         placeholder="Password"
         type={type}
+        aria-invalid={!!error}
         className="h-9 rounded-md text-[13px]"
       />
       <FieldError message={error}>
@@ -367,7 +368,12 @@ function FieldError({
   return (
     <div>
       {children}
-      {message && <p className="mt-2 text-[12px] leading-4 text-[#ef4444]">{message}</p>}
+      {message && (
+        <p className="mt-2 flex items-start gap-1.5 rounded-md bg-[#fef2f2] px-2.5 py-2 text-[12px] font-medium leading-4 text-[#dc2626]">
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+          <span>{message}</span>
+        </p>
+      )}
     </div>
   );
 }
@@ -433,7 +439,7 @@ function routeForMode(mode: AuthMode, email: string) {
 
 function getPasswordError(password: string, confirmPassword: string) {
   if (!password && !confirmPassword) return "";
-  if (password !== confirmPassword) return "Those password did not match, Try again";
+  if (password !== confirmPassword) return "Those passwords did not match. Try again.";
 
   const hasLetter = /[a-z]/i.test(password);
   const hasNumber = /\d/.test(password);
