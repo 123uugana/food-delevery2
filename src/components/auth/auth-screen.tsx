@@ -174,7 +174,7 @@ export function AuthScreen({
                   onSubmit={(event) => {
                     event.preventDefault();
                     setSubmitted(true);
-                    if (!passwordError) go("verify");
+                    if (!passwordError) router.push("/");
                   }}
                 >
                   <PasswordFields
