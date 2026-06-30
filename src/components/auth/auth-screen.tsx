@@ -298,7 +298,7 @@ export function AuthScreen({
 
         <section className="relative min-h-[680px] overflow-hidden rounded-[18px] max-lg:min-h-[420px] max-sm:min-h-[320px]">
           <Image
-            src="/Image÷.png"
+            src="/rider.png"
             alt="NomNom delivery rider on a city street"
             fill
             priority
