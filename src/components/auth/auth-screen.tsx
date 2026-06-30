@@ -78,8 +78,8 @@ export function AuthScreen({
   const signupReady = isValidEmail(email);
   const passwordError = getPasswordError(password, confirmPassword);
   const newPasswordError = getPasswordError(newPassword, newConfirmPassword);
-  const passwordReady = !!password && !!confirmPassword && !passwordError;
-  const newPasswordReady = !!newPassword && !!newConfirmPassword && !newPasswordError;
+  const passwordReady = !!password || !!confirmPassword;
+  const newPasswordReady = !!newPassword || !!newConfirmPassword;
   const loginReady = isValidEmail(loginEmail) && loginPassword.length >= 8;
   const resetReady = isValidEmail(email);
 
@@ -438,7 +438,7 @@ function routeForMode(mode: AuthMode, email: string) {
 }
 
 function getPasswordError(password: string, confirmPassword: string) {
-  if (!password && !confirmPassword) return "";
+  if (!password || !confirmPassword) return "Please enter and confirm your password.";
   if (password !== confirmPassword) return "Those passwords did not match. Try again.";
 
   const hasLetter = /[a-z]/i.test(password);
