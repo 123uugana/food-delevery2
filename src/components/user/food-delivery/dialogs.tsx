@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, Clock3, Minus, Plus, X } from "lucide-react";
+import { CheckCircle2, Clock3, LogOut, Minus, Plus, UserRound, X } from "lucide-react";
 import type { Dish } from "@/components/admin/mock-data";
 import { formatTotal } from "./utils";
 
@@ -148,6 +148,41 @@ export function LoginAlert({ onClose }: { onClose: () => void }) {
           >
             Sign up
           </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AccountDialog({
+  email,
+  onClose,
+  onLogout,
+}: {
+  email: string;
+  onClose: () => void;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/35 px-4">
+      <div className="w-full max-w-[300px] rounded-lg bg-white p-5 text-center text-[#18181b] shadow-2xl">
+        <UserRound className="mx-auto size-9 text-[#ef4444]" />
+        <h2 className="mt-3 text-[13px] font-black">Your account</h2>
+        <p className="mt-1 truncate text-[10px] font-medium text-[#777]">{email}</p>
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <button
+            onClick={onClose}
+            className="h-8 rounded-md bg-[#18181b] text-[10px] font-bold text-white"
+          >
+            Close
+          </button>
+          <button
+            onClick={onLogout}
+            className="flex h-8 items-center justify-center gap-1 rounded-md border text-[10px] font-bold"
+          >
+            <LogOut className="size-3" />
+            Log out
+          </button>
         </div>
       </div>
     </div>

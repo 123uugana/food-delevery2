@@ -12,6 +12,7 @@ import {
 import { apiUrl } from "@/lib/api";
 import { CartDrawer } from "./food-delivery/cart-drawer";
 import {
+  AccountDialog,
   AddressDialog,
   CartNotice,
   FoodDetailDialog,
@@ -25,6 +26,11 @@ import type { CartItem, CartTab, CustomerOrder } from "./food-delivery/types";
 import { formatCurrency, parsePrice } from "./food-delivery/utils";
 
 const sectionOrder = ["appetizers", "salads", "lunch", "pizzas", "main", "seafood"];
+
+type CurrentUser = {
+  id: string;
+  email: string;
+};
 
 export function FoodDeliveryHome() {
   const [categories, setCategories] = useState<Category[]>(seedCategories);
@@ -41,6 +47,21 @@ export function FoodDeliveryHome() {
   const [cartNoticeOpen, setCartNoticeOpen] = useState(false);
   const [orderSuccessOpen, setOrderSuccessOpen] = useState(false);
   const [loginAlertOpen, setLoginAlertOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(() => {
+    if (typeof window === "undefined") return null;
+
+    const storedUser = window.localStorage.getItem("nomnom-user");
+    if (!storedUser) return null;
+
+    try {
+      const user = JSON.parse(storedUser) as CurrentUser;
+      return user?.id && user?.email ? user : null;
+    } catch {
+      window.localStorage.removeItem("nomnom-user");
+      return null;
+    }
+  });
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [ordersRefreshing, setOrdersRefreshing] = useState(false);
 
@@ -185,7 +206,7 @@ export function FoodDeliveryHome() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer: "Guest customer",
+          customer: currentUser?.email ?? "Guest customer",
           foods: cartItems.map((item) => ({
             id: item.dish.id,
             name: item.dish.name,
@@ -233,7 +254,13 @@ export function FoodDeliveryHome() {
         deliveryLabel={address || "Delivery address"}
         onAddressClick={() => setAddressOpen(true)}
         onCartClick={() => openCart("cart")}
-        onUserClick={() => setLoginAlertOpen(true)}
+        onUserClick={() => {
+          if (currentUser) {
+            setAccountOpen(true);
+          } else {
+            setLoginAlertOpen(true);
+          }
+        }}
       />
 
       <div className="mx-auto max-w-[690px]">
@@ -317,6 +344,17 @@ export function FoodDeliveryHome() {
       )}
 
       {loginAlertOpen && <LoginAlert onClose={() => setLoginAlertOpen(false)} />}
+      {accountOpen && currentUser && (
+        <AccountDialog
+          email={currentUser.email}
+          onClose={() => setAccountOpen(false)}
+          onLogout={() => {
+            window.localStorage.removeItem("nomnom-user");
+            setCurrentUser(null);
+            setAccountOpen(false);
+          }}
+        />
+      )}
     </main>
   );
 }

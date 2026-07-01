@@ -4,49 +4,34 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AlertCircle, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { apiUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type AuthMode = "signup" | "password" | "login" | "reset" | "verify" | "new-password";
+type AuthMode = "signup" | "password" | "login";
 
 const modeTitles: Record<AuthMode, string> = {
   signup: "Create your account",
   password: "Create a strong password",
   login: "Log in",
-  reset: "Reset your password",
-  verify: "Please verify Your Email",
-  "new-password": "Create new password",
 };
 
 const modeDescriptions: Record<AuthMode, string> = {
   signup: "Sign up to explore your favorite dishes.",
   password: "Create a strong password with letters, numbers.",
   login: "Log in to enjoy your favorite dishes.",
-  reset: "Enter your email to receive a password reset link.",
-  verify: "",
-  "new-password": "Set a new password with a combination of letters and numbers for better security.",
 };
 
-const authModes = new Set<AuthMode>([
-  "signup",
-  "password",
-  "login",
-  "reset",
-  "verify",
-  "new-password",
-]);
+const authModes = new Set<AuthMode>(["signup", "password", "login"]);
 
 const routeByMode: Record<AuthMode, string> = {
   signup: "/sign-up",
   password: "/sign-up/password",
   login: "/log-in",
-  reset: "/forgot-password",
-  verify: "/verify-email",
-  "new-password": "/create-new-password",
 };
 
 function isAuthMode(value: string | undefined): value is AuthMode {
@@ -67,40 +52,24 @@ export function AuthScreen({
   const [loginPassword, setLoginPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newConfirmPassword, setNewConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
 
   const activeEmail = mode === "login" ? loginEmail : email;
   const emailInvalid = activeEmail.length > 0 && !isValidEmail(activeEmail);
   const signupReady = isValidEmail(email);
   const passwordError = getPasswordError(password, confirmPassword);
-  const newPasswordError = getPasswordError(newPassword, newConfirmPassword);
   const passwordReady = !!password || !!confirmPassword;
-  const newPasswordReady = !!newPassword || !!newConfirmPassword;
   const loginReady = isValidEmail(loginEmail) && loginPassword.length >= 8;
-  const resetReady = isValidEmail(email);
-
-  const content = useMemo(() => {
-    if (mode === "verify") {
-      return {
-        title: modeTitles[mode],
-        description: `We just sent an email to ${email || "example@gmail.com"}. Click the link in the email to verify your account.`,
-      };
-    }
-
-    return {
-      title: modeTitles[mode],
-      description: modeDescriptions[mode],
-    };
-  }, [email, mode]);
 
   function go(nextMode: AuthMode, options: { updateUrl?: boolean } = {}) {
     setMode(nextMode);
     setTouched(false);
     setSubmitted(false);
+    setAuthError("");
 
     if (options.updateUrl !== false) {
       router.push(routeForMode(nextMode, email));
@@ -117,7 +86,38 @@ export function AuthScreen({
       return;
     }
 
-    go(mode === "reset" ? "login" : "signup");
+    go("signup");
+  }
+
+  async function submitAuth(
+    path: "/auth/sign-up" | "/auth/log-in",
+    credentials: { email: string; password: string },
+  ) {
+    setAuthError("");
+    setAuthLoading(true);
+
+    try {
+      const response = await fetch(apiUrl(path), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
+      const data = (await response.json().catch(() => null)) as {
+        user?: { id: string; email: string };
+        error?: string;
+      } | null;
+
+      if (!response.ok || !data?.user) {
+        throw new Error(data?.error || "Could not continue. Please try again.");
+      }
+
+      window.localStorage.setItem("nomnom-user", JSON.stringify(data.user));
+      router.push("/");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Could not continue. Please try again.");
+    } finally {
+      setAuthLoading(false);
+    }
   }
 
   return (
@@ -136,10 +136,10 @@ export function AuthScreen({
 
             <div>
               <h1 className="text-[24px] font-bold tracking-normal text-[#151517]">
-                {content.title}
+                {modeTitles[mode]}
               </h1>
               <p className="mt-2 max-w-[350px] text-[14px] leading-5 text-[#7b7f87]">
-                {content.description}
+                {modeDescriptions[mode]}
               </p>
             </div>
 
@@ -174,7 +174,9 @@ export function AuthScreen({
                   onSubmit={(event) => {
                     event.preventDefault();
                     setSubmitted(true);
-                    if (!passwordError) router.push("/");
+                    if (!passwordError) {
+                      void submitAuth("/auth/sign-up", { email, password });
+                    }
                   }}
                 >
                   <PasswordFields
@@ -186,7 +188,10 @@ export function AuthScreen({
                     onPasswordChange={setPassword}
                     onShowPasswordChange={setShowPassword}
                   />
-                  <AuthButton disabled={!passwordReady}>{"Let's Go"}</AuthButton>
+                  {authError && <AuthMessage message={authError} />}
+                  <AuthButton disabled={!passwordReady || authLoading}>
+                    {authLoading ? "Creating account..." : "Let's Go"}
+                  </AuthButton>
                   <SwitchLine label="Already have an account?" action="Log in" onClick={() => go("login")} />
                 </form>
               )}
@@ -197,6 +202,12 @@ export function AuthScreen({
                   onSubmit={(event) => {
                     event.preventDefault();
                     setSubmitted(true);
+                    if (loginReady) {
+                      void submitAuth("/auth/log-in", {
+                        email: loginEmail,
+                        password: loginPassword,
+                      });
+                    }
                   }}
                 >
                   <FieldError message={submitted && emailInvalid ? "Invalid email. Use a format like example@email.com" : ""}>
@@ -224,65 +235,11 @@ export function AuthScreen({
                       className="h-9 rounded-md text-[13px]"
                     />
                   </FieldError>
-                  <button
-                    type="button"
-                    onClick={() => go("reset")}
-                    className="text-[12px] text-[#31333a] underline underline-offset-2"
-                  >
-                    Forgot password ?
-                  </button>
-                  <AuthButton disabled={!loginReady}>{"Let's Go"}</AuthButton>
+                  {authError && <AuthMessage message={authError} />}
+                  <AuthButton disabled={!loginReady || authLoading}>
+                    {authLoading ? "Logging in..." : "Let's Go"}
+                  </AuthButton>
                   <SwitchLine label="Don't have an account?" action="Sign up" onClick={() => go("signup")} />
-                </form>
-              )}
-
-              {mode === "reset" && (
-                <form
-                  className="space-y-5"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    if (resetReady) go("new-password");
-                  }}
-                >
-                  <FieldError message={emailInvalid ? "Invalid email. Use a format like example@email.com" : ""}>
-                    <Input
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      placeholder="example@gmail.com"
-                      aria-invalid={emailInvalid}
-                      className="h-9 rounded-md text-[13px]"
-                    />
-                  </FieldError>
-                  <AuthButton disabled={!resetReady}>Send link</AuthButton>
-                  <SwitchLine label="Don't have an account?" action="Sign up" onClick={() => go("signup")} />
-                </form>
-              )}
-
-              {mode === "verify" && (
-                <div className="space-y-6">
-                  <AuthButton onClick={() => go("signup")}>Resend email</AuthButton>
-                </div>
-              )}
-
-              {mode === "new-password" && (
-                <form
-                  className="space-y-4"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    setSubmitted(true);
-                    if (!newPasswordError) go("login");
-                  }}
-                >
-                  <PasswordFields
-                    password={newPassword}
-                    confirmPassword={newConfirmPassword}
-                    error={submitted ? newPasswordError : ""}
-                    showPassword={showPassword}
-                    onConfirmChange={setNewConfirmPassword}
-                    onPasswordChange={setNewPassword}
-                    onShowPasswordChange={setShowPassword}
-                  />
-                  <AuthButton disabled={!newPasswordReady}>Create password</AuthButton>
                 </form>
               )}
             </div>
@@ -378,6 +335,15 @@ function FieldError({
   );
 }
 
+function AuthMessage({ message }: { message: string }) {
+  return (
+    <p className="flex items-start gap-1.5 rounded-md bg-[#fef2f2] px-2.5 py-2 text-[12px] font-medium leading-4 text-[#dc2626]">
+      <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+      <span>{message}</span>
+    </p>
+  );
+}
+
 function AuthButton({
   children,
   disabled,
@@ -426,11 +392,11 @@ function SwitchLine({
 }
 
 function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.com$/i.test(value.trim());
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(value.trim());
 }
 
 function routeForMode(mode: AuthMode, email: string) {
-  if ((mode === "password" || mode === "verify") && email.trim()) {
+  if (mode === "password" && email.trim()) {
     return `${routeByMode[mode]}?email=${encodeURIComponent(email.trim())}`;
   }
 
